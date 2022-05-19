@@ -1,0 +1,390 @@
+
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+step 1- Using MySQL to load datasets:- 
+
+--this is the command to run the sql script file 
+>mysql -u anabig11429  -pBigdata123 "anabig11429" < "step_1.sql"
+
+--this script file consists of the code below
+
+--Select the database
+>use anabig11429;
+
+--Create tables
+
+--titles
+>drop table if exists titles;
+CREATE TABLE titles(title_id VARCHAR(20) NOT NULL, title VARCHAR(50), PRIMARY KEY(title_id));
+
+>load data local infile '/home/anabig11429/titles.csv'
+into table titles
+fields terminated by ','
+ignore 1 rows;
+
+
+--dept_emp
+>drop table if exists dept_emp;
+CREATE TABLE dept_emp(emp_no int NOT NULL, dept_no VARCHAR(50));
+
+>load data local infile '/home/anabig11429/dept_emp.csv'
+into table dept_emp
+fields terminated by ','
+ignore 1 rows;
+
+
+--dept_manager
+>drop table if exists dept_manager;
+CREATE TABLE dept_manager(dept_no VARCHAR(50) NOT NULL, emp_no int);
+
+>load data local infile '/home/anabig11429/dept_manager.csv'
+into table dept_manager
+fields terminated by ','
+ignore 1 rows;
+
+--departments
+>drop table if exists departments;
+CREATE TABLE departments(dept_no VARCHAR(50) NOT NULL, dept_name varchar(50), Primary Key(dept_no));
+
+>load data local infile '/home/anabig11429/departments.csv'
+into table departments
+fields terminated by ','
+ignore 1 rows;
+
+
+--salaries
+>drop table if exists salaries;
+CREATE TABLE salaries(emp_no int NOT NULL, salary int, Primary Key(emp_no));
+
+>load data local infile '/home/anabig11429/salaries.csv'
+into table salaries
+fields terminated by ','
+ignore 1 rows;
+
+
+--employess
+>drop table if exists employees;
+CREATE TABLE employees(emp_no int NOT NULL,emp_title_id VARCHAR(10),birth_date VARCHAR(12),first_name VARCHAR(15),last_name VARCHAR(15),sex CHAR(2),hire_date VARCHAR(12),no_of_projects int,Last_performance_rating VARCHAR(5),left_ VARCHAR(10),last_date VARCHAR(12),PRIMARY KEY(emp_no));
+
+>load data local infile '/home/anabig11429/employees.csv'
+into table employees
+fields terminated by ','
+ignore 1 rows;
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+step 2- Running the following script in shell
+>sh step_2.sh
+
+--The script file consists of the following code:-
+
+i) clearing the tables and schema files if they exist
+
+hdfs dfs -rm -r /user/anabig11429/capstone/employees/*;
+hdfs dfs -rm -r /user/anabig11429/capstone/titles/*;
+hdfs dfs -rm -r /user/anabig11429/capstone/departments/*;
+hdfs dfs -rm -r /user/anabig11429/capstone/salaries/*;
+hdfs dfs -rm -r /user/anabig11429/capstone/dept_manager/*;
+hdfs dfs -rm -r /user/anabig11429/capstone/dept_emp/*;
+
+hdfs dfs -rm -r /user/anabig11429/capstone/employees/;
+hdfs dfs -rm -r /user/anabig11429/capstone/titles/;
+hdfs dfs -rm -r /user/anabig11429/capstone/departments/;
+hdfs dfs -rm -r /user/anabig11429/capstone/salaries/;
+hdfs dfs -rm -r /user/anabig11429/capstone/dept_manager/;
+hdfs dfs -rm -r /user/anabig11429/capstone/dept_emp/;
+
+hdfs dfs -rm -r /home/anabig11429/employees.avsc;
+hdfs dfs -rm -r /home/anabig11429/titles.avsc;
+hdfs dfs -rm -r /home/anabig11429/departments.avsc;
+hdfs dfs -rm -r /home/anabig11429/salaries.avsc;
+hdfs dfs -rm -r /home/anabig11429/dept_manager.avsc;
+hdfs dfs -rm -r /home/anabig11429/dept_emp.avsc;
+
+hdfs dfs -rm -r /user/anabig11429/schema/*;
+hdfs dfs -rm -r /user/anabig11429/schema;
+
+
+ii) use sqoop to migrate tables to hive
+
+sqoop import --connect jdbc:mysql://ip-10-1-1-204.ap-south-1.compute.internal:3306/anabig11429 --username anabig11429 --password Bigdata123 --table employees --compression-codec=snappy --as-avrodatafile --target-dir /user/anabig11429/capstone/employees --m 1 --driver com.mysql.jdbc.Driver;
+sqoop import --connect jdbc:mysql://ip-10-1-1-204.ap-south-1.compute.internal:3306/anabig11429 --username anabig11429 --password Bigdata123 --table titles --compression-codec=snappy --as-avrodatafile --target-dir /user/anabig11429/capstone/titles --m 1 --driver com.mysql.jdbc.Driver;
+sqoop import --connect jdbc:mysql://ip-10-1-1-204.ap-south-1.compute.internal:3306/anabig11429 --username anabig11429 --password Bigdata123 --table departments --compression-codec=snappy --as-avrodatafile --target-dir /user/anabig11429/capstone/departments --m 1 --driver com.mysql.jdbc.Driver;
+sqoop import --connect jdbc:mysql://ip-10-1-1-204.ap-south-1.compute.internal:3306/anabig11429 --username anabig11429 --password Bigdata123 --table salaries --compression-codec=snappy --as-avrodatafile --target-dir /user/anabig11429/capstone/salaries --m 1 --driver com.mysql.jdbc.Driver;
+sqoop import --connect jdbc:mysql://ip-10-1-1-204.ap-south-1.compute.internal:3306/anabig11429 --username anabig11429 --password Bigdata123 --table dept_manager --compression-codec=snappy --as-avrodatafile --target-dir /user/anabig11429/capstone/dept_manager --m 1 --driver com.mysql.jdbc.Driver;
+sqoop import --connect jdbc:mysql://ip-10-1-1-204.ap-south-1.compute.internal:3306/anabig11429 --username anabig11429 --password Bigdata123 --table dept_emp --compression-codec=snappy --as-avrodatafile --target-dir /user/anabig11429/capstone/dept_emp --m 1 --driver com.mysql.jdbc.Driver;
+
+
+iii) copying the schema files to hdfs
+
+hadoop fs -mkdir /user/anabig11429/schema;
+
+hadoop fs -put /home/anabig11429/employees.avsc /user/anabig11429/schema/employees.avsc;
+hadoop fs -put /home/anabig11429/titles.avsc /user/anabig11429/schema/titles.avsc;
+hadoop fs -put /home/anabig11429/departments.avsc /user/anabig11429/schema/departments.avsc;
+hadoop fs -put /home/anabig11429/salaries.avsc /user/anabig11429/schema/salaries.avsc;
+hadoop fs -put /home/anabig11429/dept_manager.avsc /user/anabig11429/schema/dept_manager.avsc;
+hadoop fs -put /home/anabig11429/dept_emp.avsc /user/anabig11429/schema/dept_emp.avsc;
+
+iv) change controls
+
+hadoop fs -chmod +rw /user/anabig11429/schema
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+step 3- Hive code
+
+Run the following hive script file in shell
+>hive -f step_3.sql
+
+--it consists of the following code:-
+
+--creating database and tables in hive
+
+drop database if exists tabish_project;
+create database tabish_project;
+use tabish_project;
+
+drop table if exists employees;
+CREATE EXTERNAL TABLE employees STORED AS AVRO LOCATION '/user/anabig11429/capstone/employees' TBLPROPERTIES ('avro.schema.url'='/user/anabig11429/schema/employees.avsc');
+
+drop table if exists titles;
+CREATE EXTERNAL TABLE titles STORED AS AVRO LOCATION '/user/anabig11429/capstone/titles' TBLPROPERTIES ('avro.schema.url'='/user/anabig11429/schema/titles.avsc');
+
+drop table if exists departments;
+CREATE EXTERNAL TABLE departments STORED AS AVRO LOCATION '/user/anabig11429/capstone/departments' TBLPROPERTIES ('avro.schema.url'='/user/anabig11429/schema/departments.avsc');
+
+drop table if exists salaries;
+CREATE EXTERNAL TABLE salaries STORED AS AVRO LOCATION '/user/anabig11429/capstone/salaries' TBLPROPERTIES ('avro.schema.url'='/user/anabig11429/schema/salaries.avsc');
+
+drop table if exists dept_manager;
+CREATE EXTERNAL TABLE dept_manager STORED AS AVRO LOCATION '/user/anabig11429/capstone/dept_manager' TBLPROPERTIES ('avro.schema.url'='/user/anabig11429/schema/dept_manager.avsc');
+
+drop table if exists dept_emp;
+CREATE EXTERNAL TABLE dept_emp STORED AS AVRO LOCATION '/user/anabig11429/capstone/dept_emp' TBLPROPERTIES ('avro.schema.url'='/user/anabig11429/schema/dept_emp.avsc');
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+step 4- Impala code
+
+--Run the impala script file in shell
+>impala-shell -f step_4.sql
+
+--Invalidating the metadata from tabish_project database:-
+
+invalidate metadata tabish_project.employees;
+invalidate metadata tabish_project.titles;
+invalidate metadata tabish_project.departments;
+invalidate metadata tabish_project.salaries;
+invalidate metadata tabish_project.dept_manager;
+invalidate metadata tabish_project.dept_emp;
+
+use tabish_project;
+
+
+--EDA using impala.
+
+-- A list showing employee number, last name, first name, sex, and salary for each employee.
+select t1.emp_no, t1.first_name, t1.last_name, t1.sex, t2.salary from employees t1 join salaries t2 on t1.emp_no = t2.emp_no limit 5;
+
+-- A list showing the manager of each department.
+select t1.dept_no, t1.dept_name, t3.emp_no, t3.first_name, t3.last_name from departments t1 left join dept_manager t2 on t1.dept_no=t2.dept_no left join employees t3 on t2.emp_no=t3.emp_no limit 5;
+
+--  A list showing the department of each employee.
+select t1.emp_no, t1.first_name, t1.last_name, t3.dept_name from employees t1 join dept_emp t2 on t1.emp_no=t2.emp_no join departments t3 on t2.dept_no=t3.dept_no limit 5;
+
+-- A list showing first name, last name, and sex for employees whose first name is "Hercules" and last names begin with "B".
+select first_name, last_name, sex from employees where first_name = 'Hercules' and last_name like 'B%' limit 5;
+
+-- A list showing all employees in the Sales department.
+select t1.emp_no, t1.first_name, t1.last_name, t3.dept_name from employees t1 join dept_emp t2 on t1.emp_no=t2.emp_no join departments t3 on t2.dept_no=t3.dept_no where t3.dept_name='"Sales"' limit 5;
+
+-- A list showing all employees in the Sales and Development department.
+select t1.emp_no, t1.first_name, t1.last_name, t3.dept_name from employees t1 join dept_emp t2 on t1.emp_no=t2.emp_no join departments t3 on t2.dept_no=t3.dept_no where t3.dept_name = '"Sales"' or t3.dept_name = '"development"' limit 5;
+
+-- A list showing the frequency count of employee last names, in descending order.
+select last_name, count(last_name) as freq from employees group by last_name order by freq desc limit 5;
+
+-- A list of count of employees based on no of projects.
+select no_of_projects, count(emp_no) from employees group by no_of_projects order by count(emp_no) desc;
+
+-- A list of count of employees based on rating.
+select last_performance_rating, count(emp_no) from employees group by last_performance_rating order by count(emp_no) desc;
+
+-- A list of count of employees based on departments.
+select t1.dept_name, count(t2.emp_no) from departments t1 join dept_emp t2 on t1.dept_no=t2.dept_no group by t1.dept_name;
+
+-- Total salary expenditure till date based on departments.
+select t1.dept_name, sum(t3.salary) from departments t1 join dept_emp t2 on t1.dept_no=t2.dept_no join salaries t3 on t2.emp_no=t3.emp_no group by t1.dept_name order by sum(t3.salary) desc;
+
+
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+step 5- Spark code
+
+#Run the python script file in shell
+>spark-submit step_5.py
+
+--The file contains code mentioned below.
+
+#Creating hive context object using hive metastore
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import *
+
+spark = SparkSession.builder.appName("capstone").config('hive.metastore.uris','thrift://ip-10-1-2-24.ap-south-1.compute.internal:9083/anabig11429').enableHiveSupport().getOrCreate()
+spark
+
+spark.sql("show tables from tabish_project").show()
+
+# transforming employees table
+emp = spark.sql("select * from tabish_project.employees")
+
+emp.show(5)
+
+emp.printSchema()
+
+
+# transforming all date columns into proper format
+emp1 = emp.withColumn('birth_date', regexp_replace('birth_date', '-', '/')).withColumn("birth_date", to_date("birth_date", "M/d/yyyy"))
+emp1 = emp1.withColumn('hire_date', regexp_replace('hire_date', '-', '/')).withColumn("hire_date", to_date("hire_date", "M/d/yyyy"))
+emp1 = emp1.withColumn('last_date', regexp_replace('last_date', '-', '/')).withColumn("last_date", to_date("last_date", "M/d/yyyy"))
+
+emp1.printSchema()
+emp1.show(5)
+
+# creating views for all hive tables
+emp1.createOrReplaceTempView('emp1')
+
+titles = spark.sql("select * from tabish_project.titles")
+titles.createOrReplaceTempView('titles')
+
+departments = spark.sql("select * from tabish_project.departments")
+departments.createOrReplaceTempView('departments')
+
+salaries = spark.sql("select * from tabish_project.salaries")
+salaries.createOrReplaceTempView('salaries')
+
+dept_manager = spark.sql("select * from tabish_project.dept_manager")
+dept_manager.createOrReplaceTempView('dept_manager')
+
+dept_emp = spark.sql("select * from tabish_project.dept_emp")
+dept_emp.createOrReplaceTempView('dept_emp')
+
+#Performing EDA
+#1 A list showing employee number, last name, first name, sex, and salary for each employee.
+spark.sql("select t1.emp_no, t1.first_name, t1.last_name, t1.sex, t2.salary from emp1 t1 join salaries t2 on t1.emp_no=t2.emp_no").show(5)
+
+#2 A list showing first name, last name, and hire date for employees who were hired in 1986.
+spark.sql("select first_name, last_name, hire_date from emp1 where year(hire_date) = '1986' limit 5").show()
+
+#3 A list showing the manager of each department.
+spark.sql("select t1.dept_no, t1.dept_name, t3.emp_no, t3.first_name, t3.last_name from departments t1 left join dept_manager t2 on t1.dept_no=t2.dept_no left join employees t3 on t2.emp_no=t3.emp_no").show(24)
+
+#4 A list showing the department of each employee.
+spark.sql("select t1.emp_no, t1.first_name, t1.last_name, t3.dept_name from emp1 t1 join dept_emp t2 on t1.emp_no=t2.emp_no join departments t3 on t2.dept_no=t3.dept_no").show(5)
+
+#5 A list showing first name, last name, and sex for employees whose first name is "Hercules" and last names begin with "B".
+spark.sql("select first_name, last_name, sex from emp1 where first_name = 'Hercules' and last_name like 'B%'").show(5)
+
+#6 A list showing all employees in the Sales department.
+spark.sql("""select t1.emp_no, t1.first_name, t1.last_name, t3.dept_name from emp1 t1 join dept_emp t2 on t1.emp_no=t2.emp_no join departments t3 on t2.dept_no=t3.dept_no where t3.dept_name='"Sales"'""").show(5)
+
+#7 A list showing all employees in the Sales and Development department.
+spark.sql("""select t1.emp_no, t1.first_name, t1.last_name, t3.dept_name from emp1 t1 join dept_emp t2 on t1.emp_no=t2.emp_no join departments t3 on t2.dept_no=t3.dept_no where t3.dept_name = '"Sales"' or t3.dept_name = '"development"'""").show(5)
+
+#8 A list showing the frequency count of employee last names, in descending order.
+spark.sql("select last_name, count(last_name) as freq from emp1 group by last_name order by freq desc").show(5)
+
+#11 Calculate employee tenure & show the tenure distribution among the employees.
+spark.sql("select emp_no, cast((datediff(lastdate, hire_date))/365.4 as int) as tenure from (select *, if(last_date is null, to_date('2000-01-28'), last_date) as lastdate from emp1)").show(5)
+
+#12 A list of count of employees based on no of projects
+spark.sql("select no_of_projects, count(emp_no) from emp1 group by no_of_projects order by count(emp_no) desc").show()
+
+#13 A list of count of employees based on rating
+spark.sql("select last_performance_rating, count(emp_no) from emp1 group by last_performance_rating order by count(emp_no) desc").show()
+
+#14 A list count of employees based on departments
+spark.sql("select t1.dept_name, count(t2.emp_no) from departments t1 join dept_emp t2 on t1.dept_no=t2.dept_no group by t1.dept_name").show()
+
+#15 Total salary expenditure till date based on departments
+spark.sql("select t1.dept_name, sum(t3.salary) from departments t1 join dept_emp t2 on t1.dept_no=t2.dept_no join salaries t3 on t2.emp_no=t3.emp_no group by t1.dept_name order by sum(t3.salary) desc").show()
+
+#16 Age distribution among the employees currently working
+spark.sql("select emp_no, cast(datediff(to_date('2000-12-31'), birth_date)/365.4 as int) as age from emp1").show(5)
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+step 6- ML model:-
+
+#run the script file in shell
+>spark-submit step_6.py
+
+# The script file consist of following code:-
+
+#step 1: Combining the tables
+data = spark.sql("select t2.*, t1.title, t3.salary, t5.dept_name, cast(datediff(to_date('2000-12-31'), t2.birth_date)/365.4 as int) as age from titles t1 join emp1 t2 on t1.title_id=t2.emp_title_id join salaries t3 on t2.emp_no=t3.emp_no join dept_emp t4 on t3.emp_no=t4.emp_no join departments t5 on t4.dept_no=t5.dept_no")
+
+#step 2: creating new column for left_ as integer data type
+data = data.withColumn('label', data.left_.cast('int'))
+
+#step 3: feature selection
+continuous_features = ['no_of_projects','salary','age']
+categorical_features = ['sex','last_performance_rating','title','dept_name']
+
+#step 4: Pipeline stages
+#ML model pipeline
+
+## Create indexers for the categorical features
+stage_1 = StringIndexer(inputCol='sex', outputCol='sex_idx')
+stage_2 = StringIndexer(inputCol='last_performance_rating', outputCol='last_performance_rating_idx')
+stage_3 = StringIndexer(inputCol='title', outputCol='title_idx')
+stage_4 = StringIndexer(inputCol='dept_name', outputCol='dept_name_idx')
+
+## encode the categorical features
+stage_5 = OneHotEncoder(inputCol='sex_idx', outputCol='sex_ohe')
+stage_6 = OneHotEncoder(inputCol='last_performance_rating_idx', outputCol='last_performance_rating_ohe')
+stage_7 = OneHotEncoder(inputCol='title_idx', outputCol='title_ohe')
+stage_8 = OneHotEncoder(inputCol='dept_name_idx', outputCol='dept_name_ohe')
+
+## Create vectors for all features categorical and continuous
+stage_9 = VectorAssembler(inputCols=['sex_ohe','last_performance_rating_ohe','title_ohe','dept_name_ohe'] + continuous_features, outputCol="features")
+
+## logistic regression model                          
+stage_10 = LogisticRegression(featuresCol='features',labelCol='label')
+
+## Create the pipeline with sequence of activities
+pipeline = Pipeline( stages= [stage_1, stage_2, stage_3, stage_4, stage_5, stage_6, stage_7, stage_8, stage_9, stage_10])
+
+#step 5: spliting the data
+train_df, test_df = data.randomSplit( [0.7, 0.3], seed = 42 )
+
+#step 6: fit and transform the pipeline with data
+sample_data_train = pipeline.fit(train_df).transform(train_df) 
+
+#step 7: view some of the columns generated
+sample_data_train.select('features', 'label', 'rawPrediction', 'probability', 'prediction').show(5)
+
+#step 8: classification evaluation
+BC_eval = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="accuracy" )
+evaluate = BC_eval.evaluate(sample_data_train)
+print("accuracy:",evaluate)
+
+BC_eval2 = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="weightedPrecision" )
+evaluate2 = BC_eval2.evaluate(sample_data_train)
+print("precision:",evaluate2)
+
+BC_eval3 = MulticlassClassificationEvaluator(labelCol="label", predictionCol="prediction", metricName="f1" )
+evaluate3 = BC_eval3.evaluate(sample_data_train)
+print("f1:",evaluate3)
+
+
+----------------------------------------------------------------END-----------------------------------------------------------------------------------------------------------------------------
+
+
